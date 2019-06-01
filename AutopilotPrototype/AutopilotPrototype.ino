@@ -1,4 +1,5 @@
 #include<LiquidCrystal.h>
+#include<Streaming.h>
 
 // s1 - heading - 13
 // s2 - nav - 12
@@ -10,7 +11,7 @@
 // s8 - ias - 6
 
 const int 
-      headingBtnPin = 13,
+      headingBtnPin = 22,
       navBtnPin = 12,
       apprBtnPin = 11,
       backBtnPin = 10,
