@@ -1,6 +1,4 @@
 #include<LiquidCrystal.h>
-#include<Streaming.h>
-
 
 void printValues(int x, int y);
 
@@ -82,6 +80,9 @@ const int RWPin = A0;
 int calibrateX = 0;
 int calibrateY = 0;
 
+int yOps = 0;
+int xOps = 0;
+
 // timing values
 long lastUpdate = 0;
 long updateIncrement = 500; // milli
@@ -100,14 +101,12 @@ void setup() {
     Serial.begin(9600);
 
     // calibrate stick with middle readings
-    Serial.println("Taking calibrate reading... (X then Y)");
     calibrateX = analogRead(stickVrXPin);
     delay(100);
     calibrateY = analogRead(stickVrYPin);
-    Serial.print("CALIBRATION VALUES: ");
-    printValues(calibrateX, calibrateY);
+//    Serial.print("CALIBRATION VALUES: ");
+//    printValues(calibrateX, calibrateY);
 
-    Serial.println("Starting...");
 }
 
 void printValues(int x, int y) {
@@ -155,6 +154,8 @@ void decreaseHeading() {
 
 
 void adjustX(int diff) {
+    xOps += 1;
+    
     if (diff < 0) {
         if (invertX) {
             increaseHeading();
@@ -188,6 +189,8 @@ void decreaseAltitude() {
 }
 
 void adjustY(int diff) {
+      yOps += 1;
+
     if (diff < 0) {
         // negative change
         if (invertY) {
@@ -203,6 +206,17 @@ void adjustY(int diff) {
             increaseAltitude();
         }
     }
+}
+
+// sends serialized message out serial port
+// message like: H:123|A:42000|DONE
+void stateUpdateMessage() {
+  Serial.print("H:");
+  Serial.print(targetHeading);
+  Serial.print("|");
+  Serial.print("A:");
+  Serial.print(targetAltitude);
+  Serial.print("|DONE\n"); 
 }
 
 void loop() {
@@ -228,14 +242,14 @@ void loop() {
     }
 
     if (targetAltitude != prevAltitude) {
-        Serial.print("ALT: ");
-        Serial.println(targetAltitude);
+        //Serial.print("ALT: ");
+        //Serial.println(targetAltitude);
         prevAltitude = targetAltitude;
     }
 
     if (targetHeading != prevHeading) {
-        Serial.print("HDG: ");
-        Serial.println(targetHeading);
+        //Serial.print("HDG: ");
+        //Serial.println(targetHeading);
         prevHeading =targetHeading;
     }
 
@@ -265,10 +279,18 @@ void loop() {
     // see if ready for state update
     long now = millis();
     if ((now - lastUpdate) > updateIncrement) {
-        Serial.println("UPDATE");
-
+      // send update to program
         lastUpdate = now;
-
+        stateUpdateMessage();
+// For debugging ops
+//        Serial.print("YOPS: ");
+//        Serial.println(yOps);
+//        Serial.print("XOPs: ");
+//        Serial.println(xOps);
+        yOps = 0;
+        xOps = 0;
     }
+
+    delay(50);
 
 }
