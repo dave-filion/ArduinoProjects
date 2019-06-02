@@ -82,6 +82,10 @@ const int RWPin = A0;
 int calibrateX = 0;
 int calibrateY = 0;
 
+// timing values
+long lastUpdate = 0;
+long updateIncrement = 500; // milli
+
 LiquidCrystal lcd(RWPin, EPin, D4Pin, D5Pin, D6Pin, D7Pin);
 
 void setup() {
@@ -256,6 +260,15 @@ void loop() {
                 /* Serial.println(" RELEASED"); */
             }
         }
+    }
+
+    // see if ready for state update
+    long now = millis();
+    if ((now - lastUpdate) > updateIncrement) {
+        Serial.println("UPDATE");
+
+        lastUpdate = now;
+
     }
 
 }
