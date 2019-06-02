@@ -3,9 +3,9 @@
 void printValues(int x, int y);
 
 // bearing/altitude analog stick
-const int stickSwitchPin = A5;
-const int stickVrXPin = A4;
-const int stickVrYPin = A3;
+const int stickSwitchPin = A2;
+const int stickVrXPin = A1;
+const int stickVrYPin = A0;
 
 const int deadzoneX = 10;
 const int deadzoneY = 10;
@@ -32,7 +32,7 @@ int targetHeading = 0;
 // s8 - ias - 6
 
 const int 
-      headingBtnPin = 22,
+      headingBtnPin = 13,
       navBtnPin = 12,
       apprBtnPin = 11,
       backBtnPin = 10,
@@ -73,9 +73,9 @@ String btnLabels[numAllBtns] = {
 };
 
 // lcd pins
-const int D4Pin = 5, D5Pin = 4, D6Pin = 3, D7Pin = 2;
-const int EPin = A1;
-const int RWPin = A0;
+//const int D4Pin = 5, D5Pin = 4, D6Pin = 3, D7Pin = 2;
+//const int EPin = A1;
+//const int RWPin = A0;
 
 int calibrateX = 0;
 int calibrateY = 0;
@@ -87,7 +87,12 @@ int xOps = 0;
 long lastUpdate = 0;
 long updateIncrement = 500; // milli
 
-LiquidCrystal lcd(RWPin, EPin, D4Pin, D5Pin, D6Pin, D7Pin);
+// bit shifter inputs
+const int dsPin = 3;
+const int latchPin = 4;
+const int clockPin = 5;
+
+//LiquidCrystal lcd(RWPin, EPin, D4Pin, D5Pin, D6Pin, D7Pin);
 
 void setup() {
     // init input pulldown btns
@@ -96,7 +101,12 @@ void setup() {
         digitalWrite(allBtnPins[i], HIGH);
     }
 
-    lcd.begin(16, 2);
+    // set up 8 bit shifter
+    pinMode(dsPin, OUTPUT);
+    pinMode(latchPin, OUTPUT);
+    pinMode(clockPin, OUTPUT);
+
+//    lcd.begin(16, 2);
 
     Serial.begin(9600);
 
@@ -219,6 +229,23 @@ void stateUpdateMessage() {
   Serial.print("|DONE\n"); 
 }
 
+
+// lights up LEDS to correspond to btn state
+void btnStateToLEDDisplay() {
+  byte bitsToSend = 0;
+  for (int i = 0; i < numAllBtns; i++) {
+    bool state = btnToggleStates[i];
+    if (state == true) {
+      bitSet(bitsToSend, i);
+    }
+  }
+
+  // turn on bits
+  digitalWrite(latchPin, LOW);
+  shiftOut(dsPin, clockPin, LSBFIRST, bitsToSend);
+  digitalWrite(latchPin, HIGH);
+}
+
 void loop() {
 /*     int stickPush = digitalRead(stickSwitchPin); */
     /* if (!stickPush) { */
@@ -290,6 +317,8 @@ void loop() {
         yOps = 0;
         xOps = 0;
     }
+
+    btnStateToLEDDisplay();
 
     delay(50);
 
