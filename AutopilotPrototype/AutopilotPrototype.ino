@@ -1,6 +1,29 @@
 #include<LiquidCrystal.h>
 #include<Streaming.h>
 
+
+void printValues(int x, int y);
+
+// bearing/altitude analog stick
+const int stickSwitchPin = A5;
+const int stickVrXPin = A4;
+const int stickVrYPin = A3;
+
+const int deadzoneX = 10;
+const int deadzoneY = 10;
+
+const bool invertY = true;
+const bool invertX = false;
+
+// Altitude from previous cycle
+long prevAltitude = 0;
+long targetAltitude = 0;
+const long altIncrement = 200;
+
+// heading
+int prevHeading = 0;
+int targetHeading = 0;
+
 // s1 - heading - 13
 // s2 - nav - 12
 // s3 - approach - 11
@@ -56,6 +79,9 @@ const int D4Pin = 5, D5Pin = 4, D6Pin = 3, D7Pin = 2;
 const int EPin = A1;
 const int RWPin = A0;
 
+int calibrateX = 0;
+int calibrateY = 0;
+
 LiquidCrystal lcd(RWPin, EPin, D4Pin, D5Pin, D6Pin, D7Pin);
 
 void setup() {
@@ -68,6 +94,23 @@ void setup() {
     lcd.begin(16, 2);
 
     Serial.begin(9600);
+
+    // calibrate stick with middle readings
+    Serial.println("Taking calibrate reading... (X then Y)");
+    calibrateX = analogRead(stickVrXPin);
+    delay(100);
+    calibrateY = analogRead(stickVrYPin);
+    Serial.print("CALIBRATION VALUES: ");
+    printValues(calibrateX, calibrateY);
+
+    Serial.println("Starting...");
+}
+
+void printValues(int x, int y) {
+    Serial.print("X: ");
+    Serial.print(x);
+    Serial.print(" Y: ");
+    Serial.println(y);
 }
 
 void toggleBtn(int btnIndex, String btnLabel) {
@@ -87,8 +130,111 @@ void toggleBtn(int btnIndex, String btnLabel) {
         /* lcd.print(btnLabel); */
     }
 }
+void increaseHeading() {
+    int temp = targetHeading + 1;
+    if (temp == 360) {
+        // circle back to 0
+        targetHeading = 0;
+    } else {
+        targetHeading = temp;
+    }
+}
+
+void decreaseHeading() {
+    int temp = targetHeading - 1;
+    if (temp == -1) {
+        targetHeading = 359;
+    } else {
+        targetHeading = temp;
+    }
+}
+
+
+void adjustX(int diff) {
+    if (diff < 0) {
+        if (invertX) {
+            increaseHeading();
+        } else {
+            decreaseHeading();
+        }
+    } else {
+        // positive
+        if (invertX) {
+            decreaseHeading();
+        } else {
+            increaseHeading();
+        }
+    }
+}
+
+
+void increaseAltitude() {
+    long temp = targetAltitude + altIncrement;
+    if (temp <= 45000) {
+        targetAltitude = temp;
+    }
+}
+
+void decreaseAltitude() {
+    long temp = targetAltitude - altIncrement;
+    if (temp >= 0) {
+        // dont let altitude go below 0
+        targetAltitude = temp;
+    }
+}
+
+void adjustY(int diff) {
+    if (diff < 0) {
+        // negative change
+        if (invertY) {
+            increaseAltitude();
+        } else {
+            decreaseAltitude();
+        }
+    } else {
+        // positive change
+        if (invertY) {
+            decreaseAltitude();
+        } else {
+            increaseAltitude();
+        }
+    }
+}
 
 void loop() {
+/*     int stickPush = digitalRead(stickSwitchPin); */
+    /* if (!stickPush) { */
+    /*     Serial.println("STICK PUSHED"); */
+    /* } */
+/*  */
+    int stickXRead = analogRead(stickVrXPin);
+    int stickYRead = analogRead(stickVrYPin);
+
+    int diffx = stickXRead - calibrateX;
+    int diffy = stickYRead - calibrateY;
+
+    if (abs(diffx) > deadzoneX) {
+        // Adjust X (heading)
+        adjustX(diffx);
+    }
+
+    if (abs(diffy) > deadzoneY) {
+        // Adjust Y (altitude)
+        adjustY(diffy);
+    }
+
+    if (targetAltitude != prevAltitude) {
+        Serial.print("ALT: ");
+        Serial.println(targetAltitude);
+        prevAltitude = targetAltitude;
+    }
+
+    if (targetHeading != prevHeading) {
+        Serial.print("HDG: ");
+        Serial.println(targetHeading);
+        prevHeading =targetHeading;
+    }
+
     for (int i = 0; i < numAllBtns; i++) {
         int btnPin = allBtnPins[i];
         int prevState = btnPressStates[i];
