@@ -62,14 +62,14 @@ int btnPressStates[numAllBtns] = {
 int btnToggleStates[numAllBtns] = { 0,0,0,0,0,0,0,0};
 
 String btnLabels[numAllBtns] = {
-    "HDG",
-    "NAV",
-    "APPR",
-    "BACK",
-    "ALT",
-    "ALTSEL",
-    "VS",
-    "IAS"
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8"
 };
 
 // lcd pins
@@ -135,7 +135,7 @@ void toggleBtn(int btnIndex, String btnLabel) {
     int toggleState = btnToggleStates[btnIndex];
 
     // add press to event queue
-    eventQueue[eventQueuePtr] = btnLabel + "_press";
+    eventQueue[eventQueuePtr] = btnLabel + "_btn";
     eventQueuePtr += 1;
 
     if (toggleState == 1) {
