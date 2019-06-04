@@ -92,6 +92,11 @@ const int dsPin = 3;
 const int latchPin = 4;
 const int clockPin = 5;
 
+// data structure to store events that occured during the previous cycle to send out
+const int eventQueueSize = 100;
+int eventQueuePtr = 0; // points to last element in queue. if 0, queue is empty
+String eventQueue[eventQueueSize];
+
 //LiquidCrystal lcd(RWPin, EPin, D4Pin, D5Pin, D6Pin, D7Pin);
 
 void setup() {
@@ -128,15 +133,20 @@ void printValues(int x, int y) {
 
 void toggleBtn(int btnIndex, String btnLabel) {
     int toggleState = btnToggleStates[btnIndex];
+
+    // add press to event queue
+    eventQueue[eventQueuePtr] = btnLabel + "_press";
+    eventQueuePtr += 1;
+
     if (toggleState == 1) {
         // toggle off
-        Serial.print(btnLabel);
-        Serial.println(" TOGGLED OFF");
+        //Serial.print(btnLabel);
+        //Serial.println(" TOGGLED OFF");
         btnToggleStates[btnIndex] = 0;
     } else {
         // toggle on
-        Serial.print(btnLabel);
-        Serial.println(" TOGGLED ON");
+        //Serial.print(btnLabel);
+        //Serial.println(" TOGGLED ON");
         btnToggleStates[btnIndex] = 1;
 
 /*         lcd.clear(); */
@@ -303,19 +313,19 @@ void loop() {
         }
     }
 
+    // if there has been a state change, send it out
     // see if ready for state update
-    long now = millis();
-    if ((now - lastUpdate) > updateIncrement) {
-      // send update to program
-        lastUpdate = now;
-        stateUpdateMessage();
-// For debugging ops
-//        Serial.print("YOPS: ");
-//        Serial.println(yOps);
-//        Serial.print("XOPs: ");
-//        Serial.println(xOps);
-        yOps = 0;
-        xOps = 0;
+    if (eventQueuePtr > 0) {
+      for (int i = 0; i < eventQueuePtr + 1; i++) {
+        
+        String event = eventQueue[i];
+        String message = event + "|DONE";
+        // send out serial port
+        Serial.print(message);
+        
+        eventQueuePtr = 0; // reset
+      }
+      Serial.print('\n');
     }
 
     btnStateToLEDDisplay();
