@@ -39,9 +39,11 @@ void loop() {
         int btnState = numBtnState[i];
         if (!btnReading) {
             if (btnState == 0) {
-              String msg = i + "_btn";
-              sendMessage(msg);
-                numBtnState[i] = 1;
+              // output message to seriqal port
+              Serial.print("btn_");
+              Serial.print(i);
+              Serial.println("|!"); // denotes ernd of message
+              numBtnState[i] = 1;
             }
         } else {
             if (btnState == 1) {
@@ -52,9 +54,4 @@ void loop() {
 
         }
     }
-}
-
-void sendMessage(String val) {
-  String toSend = val + "|!";
-  Serial.println(toSend);
 }
