@@ -39,19 +39,22 @@ void loop() {
         int btnState = numBtnState[i];
         if (!btnReading) {
             if (btnState == 0) {
-                Serial.print(i);
-                Serial.println(" pressed");
+              String msg = i + "_btn";
+              sendMessage(msg);
                 numBtnState[i] = 1;
             }
         } else {
             if (btnState == 1) {
-                Serial.print(i);
-                Serial.println(" released");
+                //Serial.print(i);
+                //Serial.println(" released");
                 numBtnState[i] = 0;
             }
 
         }
     }
-
 }
 
+void sendMessage(String val) {
+  String toSend = val + "|!";
+  Serial.println(toSend);
+}
