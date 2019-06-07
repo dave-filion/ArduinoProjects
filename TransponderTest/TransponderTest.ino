@@ -10,6 +10,13 @@ const int btn7 = 10;
 const int btn8 = 11;
 const int btn9 = 12;
 
+const int btnOn = 2;
+int onBtnState = 0;
+
+//const int fnBtns[2] = {btnOn, btnOff};
+//const String fnBtnLabels[2] = {"on", "off"};
+//int fnBtnState[2] = {0,0};
+
 const int numberBtns[10] = {
     btn0,
     btn1,
@@ -26,6 +33,14 @@ const int numberBtns[10] = {
 int numBtnState[10] = {0,0,0,0,0,0,0,0,0,0};
 
 void setup() {
+//  // init fn btns
+//  for (int i = 0; i < 2; i++) {
+//    pinMode(fnBtns[i], INPUT_PULLUP);
+//  }
+
+    // on btn
+    pinMode(btnOn, INPUT_PULLUP);
+  
     // init number btns
     for (int i = 0; i < 10; i++) {
         pinMode(numberBtns[i], INPUT_PULLUP);
@@ -34,6 +49,42 @@ void setup() {
 }
 
 void loop() {
+  // check fn btns
+//    for (int i = 0; i < 2; i++) {
+//        int btnReading = digitalRead(fnBtns[i]);
+//        int btnState = fnBtnState[i];
+//        if (!btnReading) {
+//            if (btnState == 0) {
+//              // output message to seriqal port
+//              Serial.print("btn_");
+//              Serial.print(fnBtnLabels[i]);
+//              Serial.println("|!"); // denotes ernd of message
+//              fnBtnState[i] = 1;
+//            }
+//        } else {
+//            if (btnState == 1) {
+//                //Serial.print(i);
+//                //Serial.println(" released");
+//                fnBtnState[i] = 0;
+//            }
+//        }
+//    }
+
+  int btnOnReading = digitalRead(btnOn);
+  if (!btnOnReading) {
+    // btn being pushed
+    if (onBtnState == 0) {
+      Serial.println("btn_on|!");
+      onBtnState = 1;
+    }
+  } else {
+    // not being pushed
+    if (onBtnState == 1) {
+      onBtnState = 0;
+    }
+  }
+  
+  // check digit btns
     for (int i = 0; i < 10; i++) {
         int btnReading = digitalRead(numberBtns[i]);
         int btnState = numBtnState[i];
@@ -51,7 +102,6 @@ void loop() {
                 //Serial.println(" released");
                 numBtnState[i] = 0;
             }
-
         }
     }
 }
